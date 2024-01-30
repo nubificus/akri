@@ -21,7 +21,8 @@ DOCKER_PLATFORMS = $(subst $(space),$(comma),$(strip $(addprefix linux/, $(PLATF
 
 # Specify flag to build optimized release version of rust components.
 # Set to be empty to use debug builds.
-BUILD_RELEASE_FLAG ?= 1
+#BUILD_RELEASE_FLAG ?= 1
+BUILD_RELEASE_FLAG ?=
 
 # Specify which features of the Agent to build, namely which Discovery Handlers
 # should be embedded if any. IE: AGENT_FEATURES="onvif-feat opcua-feat udev-feat"
@@ -51,7 +52,7 @@ AMD64_SUFFIX = amd64
 ARM32V7_SUFFIX = arm32v7
 ARM64V8_SUFFIX = arm64v8
 
-COMMON_DOCKER_BUILD_ARGS = $(if $(LOAD), --load) $(if $(PUSH), --push) --platform=$(DOCKER_PLATFORMS) 
+COMMON_DOCKER_BUILD_ARGS = $(if $(LOAD), --load) $(if $(PUSH), --push) --platform=$(DOCKER_PLATFORMS) --progress=plain       
 # Intermediate container defines
 include build/intermediate-containers.mk
 

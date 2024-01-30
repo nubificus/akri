@@ -21,6 +21,8 @@ lazy_static! {
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
     println!("{} Controller start", API_NAMESPACE);
 
+    println!("Hello ..... UNIKERNEL-FAN");
+
     println!(
         "{} KUBERNETES_PORT found ... env_logger::init",
         API_NAMESPACE

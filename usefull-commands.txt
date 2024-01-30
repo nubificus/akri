@@ -1,0 +1,6 @@
+ # Set repo
+ CONTAINER_REPOSITORY=harbor.nbfc.io  
+ docker login 
+
+#Pus docker
+PREFIX=harbor.nbfc.io/cloud-iot/akri LABEL_PREFIX=v0.2.10   PLATFORMS="amd64" make akri-controller PUSH=1 

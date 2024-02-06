@@ -4,3 +4,35 @@
 
 #Pus docker
 PREFIX=harbor.nbfc.io/cloud-iot/akri LABEL_PREFIX=v0.2.10   PLATFORMS="amd64" make akri-controller PUSH=1 
+
+ helm package .
+ helm repo index ./
+ cp akri-0.12.24.tgz index.yaml *nubificus/akri-helm-chart-nubificus/
+
+ rm akri-0.12.23.tgz index.yaml
+
+
+from the helm chart repo :
+git add .
+git commit -m "Update version" --signoff 
+git push -u origin gh-pages
+
+Cluster:
+knativevm1
+
+Before installing the new chart:
+helm repo update
+
+
+ sudo addgroup k3s-admin
+ sudo adduser $USER k3s-admin
+ sudo usermod -a -G k3s-admin $USER
+ sudo chgrp k3s-admin /etc/rancher/k3s/k3s.yaml
+ sudo chmod g+r /etc/rancher/k3s/k3s.yaml
+ su - $USER
+
+  export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+ sudo apt install -y curl
+ curl -L https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+
+ export AKRI_HELM_CRICTL_CONFIGURATION="--set kubernetesDistro=k3s"

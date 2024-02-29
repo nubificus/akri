@@ -1,0 +1,85 @@
+apiVersion: v1
+items:
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"name":"device","namespace":"default"},"spec":{"replicas":1,"selector":{"matchLabels":{"id":"akri-http-device"}},"template":{"metadata":{"labels":{"id":"akri-http-device"},"name":"device"},"spec":{"containers":[{"args":["--path=/","--device=http://device-1:8080","--device=http://device-2:8080","--device=http://device-3:8080","--device=http://device-4:8080","--device=http://device-5:8080","--device=http://device-6:8080","--device=http://device-7:8080","--device=http://device-8:8080","--device=http://device-9:8080"],"image":"harbor.nbfc.io/cloud-iot/http-apps-device:v1.1","imagePullPolicy":"Always","name":"device","ports":[{"containerPort":8080,"name":"http"}]}],"imagePullSecrets":[{"name":"crPullSecret"}]}}}}
+    creationTimestamp: "2024-01-12T10:56:42Z"
+    generation: 1
+    name: device
+    namespace: default
+    resourceVersion: "3755246"
+    uid: cf1df739-f082-44a0-8487-27898a3baf86
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        id: akri-http-device
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          id: akri-http-device
+        name: device
+      spec:
+        containers:
+        - args:
+          - --path=/
+          - --device=http://device-1:8080
+          - --device=http://device-2:8080
+          - --device=http://device-3:8080
+          - --device=http://device-4:8080
+          - --device=http://device-5:8080
+          - --device=http://device-6:8080
+          - --device=http://device-7:8080
+          - --device=http://device-8:8080
+          - --device=http://device-9:8080
+          image: harbor.nbfc.io/cloud-iot/http-apps-device:v1.1
+          imagePullPolicy: Always
+          name: device
+          ports:
+          - containerPort: 8080
+            name: http
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        imagePullSecrets:
+        - name: crPullSecret
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2024-01-12T10:56:45Z"
+      lastUpdateTime: "2024-01-12T10:56:45Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2024-01-12T10:56:42Z"
+      lastUpdateTime: "2024-01-12T10:56:45Z"
+      message: ReplicaSet "device-8654566ddc" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 1
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+kind: List
+metadata:
+  resourceVersion: ""

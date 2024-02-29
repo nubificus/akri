@@ -26,9 +26,9 @@ ARG AKRI_COMPONENT
 RUN mkdir -p /build/bin
 RUN PROFILE=$(echo "${EXTRA_CARGO_ARGS}" | grep -q -- --release && echo "release" || echo "debug"); \
     cp ./target/${PROFILE}/${AKRI_COMPONENT} /build/bin/akri
-# Prepare crictl for agent
+# Prepare crictl for agent ...TODO: make this multi arch
 RUN VERSION=v1.25.0; if [ "${AKRI_COMPONENT}" = "agent" ]; then wget \ 
-    "https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/crictl-$VERSION-linux.tar.gz" -O crictl.tar.gz\ 
+    "https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/crictl-$VERSION-linux-amd64.tar.gz" -O crictl.tar.gz\ 
     && tar zxvf crictl.tar.gz -C /build/bin; fi
 #=====================================================================================================
 

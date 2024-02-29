@@ -400,6 +400,7 @@ pub async fn handle_instance_change(
         instance.metadata.namespace.as_ref().ok_or_else(|| {
             anyhow::anyhow!("Namespace not found for instance: {}", &instance_name)
         })?;
+    trace!("Am here about to check ... configuration");
     let configuration = match kube_interface
         .find_configuration(&instance.spec.configuration_name, instance_namespace)
         .await
@@ -418,6 +419,8 @@ pub async fn handle_instance_change(
             return Ok(());
         }
     };
+    trace!("About to check the broker changes");
+
     if let Some(broker_spec) = &configuration.spec.broker_spec {
         let instance_change_result = match broker_spec {
             BrokerSpec::BrokerPodSpec(p) => {
@@ -438,6 +441,32 @@ pub async fn handle_instance_change(
             error!("Unable to handle Broker action: {:?}", e);
         }
     }
+
+    trace!("About to check the firmware changes");
+    trace!("About to check the firmware {:?}", configuration.metadata.name);
+    trace!("About to check the firmware {:?}", configuration);
+    trace!("About to check the firmware {:?}", configuration.spec.discovery_handler.name);
+    trace!("About to check the firmware {:?}", configuration.spec.firmware_job_spec);
+
+
+    trace!{"Check boolean : & configuration.spec.firmeware_job_spec {:?}",configuration.spec.firmware_job_spec}
+
+    if let Some(firmweare_job_spec) = &configuration.spec.firmware_job_spec {  
+        trace!("about to handle the firmware job spec {:?}", firmweare_job_spec);
+        let firmware_change_result = handle_instance_change_job(
+            instance,
+            *configuration.metadata.generation.as_ref().unwrap(),
+            &firmweare_job_spec,
+            action,
+            kube_interface,
+        ).await;       
+        
+
+        if let Err(e) = firmware_change_result {
+            error!("Unable to handle firmware action: {:?}", e);
+        }
+    }
+
     Ok(())
 }
 

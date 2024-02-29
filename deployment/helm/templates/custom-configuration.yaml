@@ -145,4 +145,62 @@ spec:
   brokerProperties: {}
   {{- end }}
   capacity: {{ .Values.custom.configuration.capacity }}
+  {{- if .Values.custom.configuration.firmwareJob.image.repository }}
+  firmwareJobSpec:
+      template:
+        spec:
+          containers:
+          - name: {{ .Values.custom.configuration.name }}-firmware-broker
+            image: {{ printf "%s:%s" .Values.custom.configuration.firmwareJob..Values.custom.configuration.firmwareJob.image.tag | quote }}
+            {{- if .Values.custom.configuration.firmwareJob.command }}
+            command: 
+              {{- toYaml .Values.custom.configuration.firmwareJob.command | nindent 14 }}
+            {{- end }}
+            {{- with .Values.custom.configuration.pullPolicy }}
+            imagePullPolicy: {{ . }}
+            {{- end }}
+            {{- if .Values.custom.configuration.firmwareJob.env }}
+            env:
+              {{- range $key, $val := .Values.custom.configuration.firmwareJob.env }}
+              - name: {{ $key }}
+                value: {{ $val | quote }}
+              {{- end }}
+            {{- end }}
+            {{- if .Values.custom.configuration.firmwareJob.envFrom }}
+            envFrom:
+            {{- range $val := .Values.custom.configuration.firmwareJob.envFrom.secretRef }}
+            - secretRef:
+                name: {{ $val | quote }}
+            {{- end }}
+            {{- range $val := .Values.custom.configuration.firmwareJob.envFrom.configMapRef }}
+            - configMapRef:
+                name: {{ $val | quote }}
+            {{- end }}
+            {{- end }}
+            resources:
+              requests:
+                {{`"{{PLACEHOLDER}}"`}} : "1"
+                memory: {{ .Values.custom.configuration.firmwareJob.resources.memoryRequest }}
+                cpu: {{ .Values.custom.configuration.firmwareJob.resources.cpuRequest }}
+              limits:
+                {{`"{{PLACEHOLDER}}"`}} : "1"
+                memory: {{ .Values.custom.configuration.firmwareJob.resources.memoryLimit }}
+                cpu: {{ .Values.custom.configuration.firmwareJob.resources.cpuLimit }}
+            {{- with .Values.custom.configuration.firmwareJob.volumeMounts}}
+            volumeMounts:
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .Values.custom.configuration.firmwareJob.volumes}}
+          volumes:
+            {{- toYaml . | nindent 10 }}
+          {{- end }}
+          restartPolicy: {{ .Values.custom.configuration.firmwareJob.restartPolicy }}
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 10 }}
+          {{- end }}
+      backoffLimit: {{ .Values.custom.configuration.firmwareJob.backoffLimit }}
+      parallelism: {{ .Values.custom.configuration.firmwareJob.parallelism }}
+      completions: {{ .Values.custom.configuration.firmwareJob.completions }}
+  {{- end }}
 {{- end }}

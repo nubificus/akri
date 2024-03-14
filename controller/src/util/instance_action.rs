@@ -443,13 +443,6 @@ pub async fn handle_instance_change(
     }
 
     trace!("About to check the firmware changes");
-    trace!("About to check the firmware {:?}", configuration.metadata.name);
-    trace!("About to check the firmware {:?}", configuration);
-    trace!("About to check the firmware {:?}", configuration.spec.discovery_handler.name);
-    trace!("About to check the firmware {:?}", configuration.spec.firmware_job_spec);
-
-
-    trace!{"Check boolean : & configuration.spec.firmeware_job_spec {:?}",configuration.spec.firmware_job_spec}
 
     if let Some(firmweare_job_spec) = &configuration.spec.firmware_job_spec {  
         trace!("about to handle the firmware job spec {:?}", firmweare_job_spec);

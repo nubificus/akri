@@ -1,4 +1,4 @@
-FROM rust:1.73-slim-bookworm AS planner
+FROM rust:1.74-slim-bookworm AS planner
 RUN rustup component add rustfmt
 RUN apt-get update && apt-get install -y clang lld protobuf-compiler pkg-config mmdebstrap wget
 RUN cargo install cargo-chef
@@ -10,7 +10,7 @@ ARG EXTRA_CARGO_ARGS
 RUN cargo chef prepare --recipe-path recipe.json
 #===================================================================================================
 
-FROM  rust:1.73-slim-bookworm AS builder
+FROM  rust:1.74-slim-bookworm AS builder
 RUN rustup component add rustfmt
 RUN apt-get update && apt-get install -y clang lld protobuf-compiler pkg-config mmdebstrap wget
 RUN cargo install cargo-chef
@@ -41,7 +41,7 @@ RUN VERSION=v1.25.0; if [ "${AKRI_COMPONENT}" = "agent" ]; then wget \
 # ,controller,debug_echo_discovery_handler,onvif_discovery_handler,opcua_discovery_handler,udev_discovery_handler
 # #ENTRYPOINT [ "/app/akri" ]
 
-FROM rust:1.73-slim-bookworm AS raul
+FROM rust:1.74-slim-bookworm AS raul
 WORKDIR /app
 COPY --from=builder /build/bin/ .
 ENV RUST_LOG agent,akri_debug_echo,akri_discovery_utils,akri_onvif,akri_opcua,akri_shared,akri_udev\ 

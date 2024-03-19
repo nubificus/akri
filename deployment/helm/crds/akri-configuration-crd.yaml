@@ -15,6 +15,10 @@ spec:
             spec:
               type: object
               properties:
+                firmwareJobSpec: # {{JobSpec}
+                  x-kubernetes-preserve-unknown-fields: true
+                  type: object
+                  nullable: true                
                 discoveryHandler: # {{DiscoveryHandlerInfo}}
                   type: object
                   properties:

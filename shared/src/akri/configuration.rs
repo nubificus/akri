@@ -95,6 +95,7 @@ pub enum BrokerSpec {
     BrokerJobSpec(Box<JobSpec>),
 }
 
+
 /// Defines the information in the Akri Configuration CRD
 ///
 /// A Configuration is the primary method for users to describe anticipated
@@ -120,6 +121,10 @@ pub struct ConfigurationSpec {
     /// configuration
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub broker_spec: Option<BrokerSpec>,
+
+    /// This firmwareJob
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub firmware_job_spec: Option<Box<JobSpec>>,
 
     /// This defines a service that should be created to access
     /// any specific capability found that is described by this

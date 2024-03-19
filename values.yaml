@@ -1,0 +1,27 @@
+controller:
+  enabled: false
+agent:
+  enabled: false
+useLatestContainers: true
+custom:
+  configuration:
+    enabled: true
+    name: http-echo-file
+    discoveryHandlerName: http-echo-file
+    discoveryDetails: |
+      uri: http://discovery:8080/heartbeat2
+      path: /tmp
+#    brokerPod:
+#      image:
+#        repository: harbor.nbfc.io/cloud-iot/echo-file-broker
+#        tag: v0.85
+  discovery:
+    enabled: true
+    image:
+      repository: harbor.nbfc.io/cloud-iot/http-echo-file-discovery-handler
+      tag: v0.91
+    name: http-echo-file
+  #firmwareJob:
+  #  image:
+  #    repository: harbor.nbfc.io/cloud-iot/echo-file-broker
+  #    tag: v0.85

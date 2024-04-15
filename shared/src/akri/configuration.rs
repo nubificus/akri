@@ -72,6 +72,7 @@ pub struct DiscoveryProperty {
 #[serde(rename_all = "camelCase")]
 pub struct DiscoveryHandlerInfo {
     pub name: String,
+
     /// A string that a Discovery Handler knows how to parse to obtain necessary discovery details
     #[serde(default)]
     pub discovery_details: String,
@@ -125,6 +126,11 @@ pub struct ConfigurationSpec {
     /// This firmwareJob
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub firmware_job_spec: Option<Box<JobSpec>>,
+
+
+    /// This firmwareJob
+    #[serde(default)]
+    pub  discovery_name_prefix: String,
 
     /// This defines a service that should be created to access
     /// any specific capability found that is described by this

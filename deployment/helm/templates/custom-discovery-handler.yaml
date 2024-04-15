@@ -43,6 +43,8 @@ spec:
         {{- end }}
         - name: DISCOVERY_HANDLERS_DIRECTORY
           value: /var/lib/akri
+        - name: DISCOVERY_HANDLER_SUFFIX
+          value: {{ .Values.custom.discovery.suffix}}
         volumeMounts:
         - name: discovery-handlers
           mountPath: /var/lib/akri

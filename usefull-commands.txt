@@ -8,8 +8,9 @@ PREFIX=harbor.nbfc.io/cloud-iot/akri LABEL_PREFIX=v0.2.10   PLATFORMS="amd64" ma
  helm package .
  helm repo index ./
  cp akri-0.12.24.tgz index.yaml *nubificus/akri-helm-chart-nubificus/
-
  rm akri-0.12.23.tgz index.yaml
+
+(*in the above process change the values names of Chart )
 
 
 from the helm chart repo :

@@ -151,7 +151,7 @@ spec:
         spec:
           containers:
           - name: {{ .Values.custom.configuration.name }}-firmware-broker
-            image: {{ printf "%s:%s" .Values.custom.configuration.firmwareJob..Values.custom.configuration.firmwareJob.image.tag | quote }}
+            image: {{ printf "%s:%s" .Values.custom.configuration.firmwareJob.image.repository .Values.custom.configuration.firmwareJob.image.tag | quote }}
             {{- if .Values.custom.configuration.firmwareJob.command }}
             command: 
               {{- toYaml .Values.custom.configuration.firmwareJob.command | nindent 14 }}

@@ -2,19 +2,30 @@ apiVersion: v1
 entries:
   akri:
   - apiVersion: v2
-    appVersion: 0.12.47
-    created: "2024-02-10T00:35:14.017176444+02:00"
+    appVersion: 0.12.55
+    created: "2024-04-15T16:18:15.867330461+03:00"
     description: A Nubificus-Helm chart for Akri
-    digest: 5eea04729e8945d04e0abf527831d6986101329f1cfdac080fa652979ad01a8d
+    digest: f355bea8db6ca4b57cc0f7d9ba4f8392a10093163de09aba695699d1ecaa7c2c
     icon: https://raw.githubusercontent.com/project-akri/akri-docs/main/art/icon/akri-icon-light.svg
     name: akri
     type: application
     urls:
-    - akri-0.12.47.tgz
-    version: 0.12.47
+    - akri-0.12.55.tgz
+    version: 0.12.55
+  - apiVersion: v2
+    appVersion: 0.12.54
+    created: "2024-04-15T16:18:15.865360528+03:00"
+    description: A Nubificus-Helm chart for Akri
+    digest: a1d65b0b30171a0b6f0955d979be0c57a003cbff459ace3e97786b1b25054d3b
+    icon: https://raw.githubusercontent.com/project-akri/akri-docs/main/art/icon/akri-icon-light.svg
+    name: akri
+    type: application
+    urls:
+    - akri-0.12.54.tgz
+    version: 0.12.54
   - apiVersion: v2
     appVersion: 0.12.21
-    created: "2024-02-10T00:35:14.018514537+02:00"
+    created: "2024-04-15T16:18:15.868569925+03:00"
     description: A Nubificus-Helm chart for Akri
     digest: 20f680a5375c60a6bf2cd8369d9b6479b79dae47b3b4fdc51e022b44c7362cc9
     icon: https://raw.githubusercontent.com/project-akri/akri-docs/main/art/icon/akri-icon-light.svg
@@ -23,4 +34,4 @@ entries:
     urls:
     - bundle/akri-0.12.21.tgz
     version: 0.12.21
-generated: "2024-02-10T00:35:14.015679826+02:00"
+generated: "2024-04-15T16:18:15.861942382+03:00"

@@ -282,7 +282,12 @@ impl DHRequestImpl {
                 .await
                 .iter_mut()
                 .flat_map(|r| r.borrow_and_update().clone().into_iter())
-                .unique_by(|d| self.get_device_cdi_fqdn(d))
+                .fold(HashMap::new(), |mut acc, device| {
+                    let cdi_name = self.get_device_cdi_fqdn(&device);
+                    acc.insert(cdi_name, device);
+                    acc
+                })
+                .into_values()
                 .collect();
             self.notifier
                 .send_replace(crate::device_manager::cdi::Kind {

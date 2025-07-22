@@ -19,7 +19,7 @@ use crate::discovery_handler_manager::{
 };
 
 use kube::api::ObjectMeta;
-use kube::{Resource, ResourceExt};
+use kube::{Resource, ResourceExt, Error as KubeError};
 use kube_runtime::{
     controller::Action,
     reflector::{ObjectRef, Store},
@@ -162,11 +162,51 @@ pub async fn reconcile(
     }
 
     for instance in discovered_instances {
-        ctx.client
-            .namespaced(&namespace)
-            .apply(instance, &ctx.agent_identifier)
-            .await
-            .map_err(|e| Error::Other(e.into()))?;
+        let mut retries = 0;
+        const MAX_RETRIES: u32 = 5;
+        let mut current_instance = instance;
+        
+        loop {
+            match ctx.client
+                .namespaced(&namespace)
+                .apply(current_instance.clone(), &ctx.agent_identifier)
+                .await {
+                Ok(_) => break,
+                Err(KubeError::Api(api_err)) if api_err.code == 409 && retries < MAX_RETRIES => {
+                    // Handle conflict by fetching current state and merging
+                    let api: Box<dyn akri_shared::k8s::api::Api<Instance>> = ctx.client.namespaced(&namespace);
+                    match api.get(&current_instance.name_any()).await {
+                        Ok(Some(existing_instance)) => {
+                            // Merge our properties with existing ones
+                            let mut merged_properties = existing_instance.spec.broker_properties.clone();
+                            
+                            // Add/update our properties (last writer wins for individual keys)
+                            for (key, value) in &current_instance.spec.broker_properties {
+                                merged_properties.insert(key.clone(), value.clone());
+                            }
+                            
+                            // Create updated instance with merged properties
+                            current_instance = Instance {
+                                spec: akri_shared::akri::instance::InstanceSpec {
+                                    broker_properties: merged_properties,
+                                    ..current_instance.spec.clone()
+                                },
+                                metadata: existing_instance.metadata.clone(),
+                            };
+                        }
+                        Ok(None) | Err(_) => {
+                            // Instance doesn't exist or couldn't be fetched, use original
+                        }
+                    }
+                    
+                    retries += 1;
+                    let delay = Duration::from_millis(50 * 2_u64.pow(retries));
+                    tokio::time::sleep(delay).await;
+                    continue;
+                }
+                Err(e) => return Err(Error::Other(e.into())),
+            }
+        }
     }
 
     ctx.error_backoffs.lock().unwrap().remove(&dc.name_any());

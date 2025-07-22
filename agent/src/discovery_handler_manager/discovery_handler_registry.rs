@@ -282,8 +282,32 @@ impl DHRequestImpl {
                 .await
                 .iter_mut()
                 .flat_map(|r| r.borrow_and_update().clone().into_iter())
-                .fold(HashMap::new(), |mut acc, device| {
+                .fold(HashMap::<String, Arc<DiscoveredDevice>>::new(), |mut acc, device| {
                     let cdi_name = self.get_device_cdi_fqdn(&device);
+                    
+                    // For shared devices, merge properties from all discovery sources
+                    match acc.get(&cdi_name) {
+                        Some(existing_device) if matches!(device.as_ref(), DiscoveredDevice::SharedDevice(_)) => {
+                            if let (DiscoveredDevice::SharedDevice(existing), DiscoveredDevice::SharedDevice(new)) = 
+                                (existing_device.as_ref(), device.as_ref()) {
+                                if existing.id == new.id {
+                                    // Merge properties - newer properties take precedence
+                                    let mut merged_props = existing.properties.clone();
+                                    merged_props.extend(new.properties.clone());
+                                    
+                                    let merged_device = Arc::new(DiscoveredDevice::SharedDevice(Device {
+                                        id: existing.id.clone(),
+                                        properties: merged_props,
+                                        mounts: new.mounts.clone(), // Use latest mounts
+                                        device_specs: new.device_specs.clone(), // Use latest specs
+                                    }));
+                                    acc.insert(cdi_name, merged_device);
+                                    return acc;
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
                     acc.insert(cdi_name, device);
                     acc
                 })

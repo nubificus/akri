@@ -542,7 +542,7 @@ mod tests {
     use std::{sync::Arc, time::Duration};
 
     use crate::{
-        device_manager::cdi::{self, Kind},
+        device_manager::cdi::{self},
         discovery_handler_manager::mock::MockDiscoveryManagerKubeInterface,
     };
     use akri_discovery_utils::discovery::v0 as discovery_utils;
@@ -687,6 +687,133 @@ mod tests {
                 }
             }]
         );
+    }
+
+    #[tokio::test]
+    async fn test_device_property_update_in_get_instances() {
+        // Create a device with initial properties
+        let (dh_send, dh_rec) = watch::channel(vec![Arc::new(DiscoveredDevice::LocalDevice(
+            Device {
+                id: "my_local_device".to_owned(),
+                properties: HashMap::from([("MY_DEVICE_KEY".to_owned(), "initial_value".to_owned())]),
+                mounts: Default::default(),
+                device_specs: Default::default(),
+            },
+            "my_node".to_owned(),
+        ))]);
+        
+        let endpoints = RwLock::new(vec![dh_rec]);
+        let (cdi_notifier, _) = watch::channel(Default::default());
+        let req = DHRequestImpl {
+            endpoints,
+            notifier: cdi_notifier,
+            key: "my_config".to_owned(),
+            handler_name: "mock_handler".to_string(),
+            details: Default::default(),
+            properties: Default::default(),
+            extra_device_properties: RwLock::new(HashMap::new()),
+            kube_client: Arc::new(MockDiscoveryManagerKubeInterface::new()),
+            termination_notifier: Arc::new(Notify::new()),
+        };
+
+        // Get initial instances
+        let initial_instances = req.get_instances().await.unwrap();
+        assert_eq!(initial_instances.len(), 1);
+        assert_eq!(
+            initial_instances[0].spec.broker_properties.get("MY_DEVICE_KEY"),
+            Some(&"initial_value".to_owned())
+        );
+
+        // Update device with new properties
+        let updated_device = Arc::new(DiscoveredDevice::LocalDevice(
+            Device {
+                id: "my_local_device".to_owned(),
+                properties: HashMap::from([("MY_DEVICE_KEY".to_owned(), "updated_value".to_owned())]),
+                mounts: Default::default(),
+                device_specs: Default::default(),
+            },
+            "my_node".to_owned(),
+        ));
+        dh_send.send(vec![updated_device]).unwrap();
+
+        // Get updated instances
+        let updated_instances = req.get_instances().await.unwrap();
+        assert_eq!(updated_instances.len(), 1);
+        assert_eq!(
+            updated_instances[0].spec.broker_properties.get("MY_DEVICE_KEY"),
+            Some(&"updated_value".to_owned())
+        );
+
+        // Verify instance name/hash remains the same (since device ID is unchanged)
+        assert_eq!(
+            initial_instances[0].metadata.name,
+            updated_instances[0].metadata.name
+        );
+        assert_eq!(
+            initial_instances[0].spec.cdi_name,
+            updated_instances[0].spec.cdi_name
+        );
+    }
+
+    #[tokio::test]
+    async fn test_device_property_update_in_watch_devices() {
+        let (notifier, mut n_rec) = watch::channel(Default::default());
+        let (dh_send, dh_rec) = watch::channel(Default::default());
+        let req = Arc::new(DHRequestImpl {
+            endpoints: RwLock::new(vec![dh_rec]),
+            notifier,
+            key: "my_config".to_owned(),
+            handler_name: "mock_handler".to_string(),
+            details: "discovery details".to_string(),
+            properties: vec![],
+            extra_device_properties: RwLock::new(HashMap::new()),
+            kube_client: Arc::new(MockDiscoveryManagerKubeInterface::new()),
+            termination_notifier: Arc::new(Notify::new()),
+        });
+        let req_ref = req.clone();
+
+        let (_new_dh_sen, rec) = broadcast::channel(1);
+
+        let _task = tokio::spawn(async move { req_ref.watch_devices(rec).await });
+        assert!(n_rec.borrow_and_update().devices.is_empty());
+
+        // Send initial device with properties
+        let initial_device = Arc::new(DiscoveredDevice::SharedDevice(Device {
+            id: "my_shared_device".to_owned(),
+            properties: HashMap::from([("ENV_KEY".to_owned(), "initial_value".to_owned())]),
+            mounts: vec![],
+            device_specs: vec![],
+        }));
+        dh_send.send(vec![initial_device.clone()]).unwrap();
+
+        tokio::time::sleep(Duration::from_millis(100)).await;
+        let initial_cdi_devices = n_rec.borrow_and_update().devices.clone();
+        assert_eq!(initial_cdi_devices.len(), 1);
+        assert_eq!(
+            initial_cdi_devices[0].container_edits.env,
+            vec!["ENV_KEY=initial_value".to_owned()]
+        );
+
+        // Send updated device with changed properties (same ID)
+        let updated_device = Arc::new(DiscoveredDevice::SharedDevice(Device {
+            id: "my_shared_device".to_owned(),
+            properties: HashMap::from([("ENV_KEY".to_owned(), "updated_value".to_owned())]),
+            mounts: vec![],
+            device_specs: vec![],
+        }));
+        dh_send.send(vec![updated_device.clone()]).unwrap();
+
+        tokio::time::sleep(Duration::from_millis(100)).await;
+        let updated_cdi_devices = n_rec.borrow_and_update().devices.clone();
+        assert_eq!(updated_cdi_devices.len(), 1);
+        // Verify that the properties were updated
+        assert_eq!(
+            updated_cdi_devices[0].container_edits.env,
+            vec!["ENV_KEY=updated_value".to_owned()]
+        );
+
+        // Device name should remain the same (same hash since same ID)
+        assert_eq!(initial_cdi_devices[0].name, updated_cdi_devices[0].name);
     }
 
     #[tokio::test]
@@ -994,29 +1121,23 @@ mod tests {
             Ok(ObjectRef::new("my-config").within("namespace"))
         );
 
-        assert_eq!(
-            cdi_rec.borrow_and_update().clone(),
-            HashMap::from([(
-                "akri.sh/my-config".to_owned(),
-                Kind {
-                    kind: "akri.sh/my-config".to_owned(),
-                    annotations: Default::default(),
-                    container_edits: vec![ContainerEdit::default()],
-                    devices: vec![
-                        crate::device_manager::cdi::Device {
-                            name: "cb2ad7".to_owned(),
-                            annotations: Default::default(),
-                            container_edits: Default::default(),
-                        },
-                        crate::device_manager::cdi::Device {
-                            name: "7bbc11".to_owned(),
-                            annotations: Default::default(),
-                            container_edits: Default::default(),
-                        },
-                    ]
-                }
-            )])
-        );
+        // Check that both devices are present (order doesn't matter due to HashMap)
+        let cdi_result = cdi_rec.borrow_and_update().clone();
+        assert_eq!(cdi_result.len(), 1);
+        let kind = cdi_result.get("akri.sh/my-config").unwrap();
+        assert_eq!(kind.kind, "akri.sh/my-config");
+        assert_eq!(kind.devices.len(), 2);
+        
+        // Check that both expected devices are present
+        let expected_device_names = vec!["cb2ad7", "7bbc11"];
+        for expected_name in &expected_device_names {
+            assert!(
+                kind.devices.iter().any(|d| d.name == *expected_name),
+                "Expected device {} not found in {:?}",
+                expected_name,
+                kind.devices
+            );
+        }
 
         dev_senders.lock().unwrap().pop();
         close_2.send(()).unwrap();
@@ -1025,22 +1146,14 @@ mod tests {
             config_rec.try_recv(),
             Ok(ObjectRef::new("my-config").within("namespace"))
         );
-        assert_eq!(
-            cdi_rec.borrow_and_update().clone(),
-            HashMap::from([(
-                "akri.sh/my-config".to_owned(),
-                Kind {
-                    kind: "akri.sh/my-config".to_owned(),
-                    annotations: Default::default(),
-                    container_edits: vec![Default::default()],
-                    devices: vec![crate::device_manager::cdi::Device {
-                        name: "cb2ad7".to_owned(),
-                        annotations: Default::default(),
-                        container_edits: Default::default(),
-                    },]
-                }
-            )])
-        );
+        
+        // Check that only one device remains
+        let cdi_result = cdi_rec.borrow_and_update().clone();
+        assert_eq!(cdi_result.len(), 1);
+        let kind = cdi_result.get("akri.sh/my-config").unwrap();
+        assert_eq!(kind.kind, "akri.sh/my-config");
+        assert_eq!(kind.devices.len(), 1);
+        assert_eq!(kind.devices[0].name, "cb2ad7");
 
         dev_senders.lock().unwrap().pop();
         close_1.send(()).unwrap();

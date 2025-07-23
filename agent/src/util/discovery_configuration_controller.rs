@@ -185,13 +185,17 @@ pub async fn reconcile(
                                 merged_properties.insert(key.clone(), value.clone());
                             }
                             
-                            // Create updated instance with merged properties
+                            // Create updated instance with merged properties and clean metadata
                             current_instance = Instance {
                                 spec: akri_shared::akri::instance::InstanceSpec {
                                     broker_properties: merged_properties,
                                     ..current_instance.spec.clone()
                                 },
-                                metadata: existing_instance.metadata.clone(),
+                                metadata: ObjectMeta {
+                                    name: existing_instance.metadata.name.clone(),
+                                    namespace: existing_instance.metadata.namespace.clone(),
+                                    ..Default::default()
+                                },
                             };
                         }
                         Ok(None) | Err(_) => {

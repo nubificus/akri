@@ -18,6 +18,7 @@ use super::KubeImpl;
 pub trait Api<T: Clone + Send + Sync + Resource>: Send + Sync {
     fn as_inner(&self) -> kube::Api<T>;
     async fn apply(&self, obj: T, field_manager: &str) -> Result<T, Error>;
+    async fn apply_force(&self, obj: T, field_manager: &str) -> Result<T, Error>;
     async fn raw_patch(
         &self,
         name: &str,
@@ -64,6 +65,12 @@ where
     async fn apply(&self, obj: T, field_manager: &str) -> Result<T, Error> {
         let name = obj.name_any();
         let pp = PatchParams::apply(field_manager);
+        let patch = kube::api::Patch::Apply(obj);
+        self.patch(&name, &pp, &patch).await
+    }
+    async fn apply_force(&self, obj: T, field_manager: &str) -> Result<T, Error> {
+        let name = obj.name_any();
+        let pp = PatchParams::apply(field_manager).force();
         let patch = kube::api::Patch::Apply(obj);
         self.patch(&name, &pp, &patch).await
     }

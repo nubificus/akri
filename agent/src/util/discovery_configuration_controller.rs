@@ -186,17 +186,32 @@ pub async fn reconcile(
                             }
                             
                             // Create updated instance with merged properties and clean metadata
+                            // Preserve other important fields from existing instance
                             current_instance = Instance {
                                 spec: akri_shared::akri::instance::InstanceSpec {
                                     broker_properties: merged_properties,
-                                    ..current_instance.spec.clone()
+                                    nodes: current_instance.spec.nodes.clone(), // Keep our nodes
+                                    capacity: current_instance.spec.capacity,   // Keep our capacity
+                                    configuration_name: existing_instance.spec.configuration_name.clone(),
+                                    cdi_name: existing_instance.spec.cdi_name.clone(),
+                                    shared: existing_instance.spec.shared,
+                                    device_usage: existing_instance.spec.device_usage.clone(),
                                 },
                                 metadata: ObjectMeta {
                                     name: existing_instance.metadata.name.clone(),
                                     namespace: existing_instance.metadata.namespace.clone(),
+                                    owner_references: current_instance.metadata.owner_references.clone(),
                                     ..Default::default()
                                 },
                             };
+                            
+                            // Use force apply to resolve field manager conflicts
+                            match api.apply_force(current_instance.clone(), &ctx.agent_identifier).await {
+                                Ok(_) => break,
+                                Err(_) => {
+                                    // If force apply also fails, continue to retry with exponential backoff
+                                }
+                            }
                         }
                         Ok(None) | Err(_) => {
                             // Instance doesn't exist or couldn't be fetched, use original
